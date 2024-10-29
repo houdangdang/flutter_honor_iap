@@ -22,10 +22,14 @@ class FlutterIapClient {
   static const int SUBSCRIPTION = 2;
 
   /// 初始化IAP SDK
-  static Future<bool> getIapClient(String appId, String cpId) async {
+  static Future<bool> getIapClient({
+    required String appId,
+    required String cpId,
+    required String publicKey,
+  }) async {
     bool result = await _channel.invokeMethod(
       'getIapClient',
-      <String, String>{'appId': appId, 'cpId': cpId },
+      <String, String>{'appId': appId, 'cpId': cpId, 'publicKey': publicKey},
     );
     return result;
   }
@@ -45,63 +49,44 @@ class FlutterIapClient {
     );
   }
 
-  // /// Displays the subscription editing screen or subscription management screen of HUAWEI IAP.
-  // static Future<void> startIapActivity(StartIapActivityReq request) async {
-  //   return await _channel.invokeMethod('startIapActivity', request.toMap());
-  // }
+  /// Creates orders for products managed by the product management system (PMS), including consumables, non-consumables, and subscriptions.
+  static Future<PurchaseResultInfo> createProductOrderIntent(
+      PurchaseIntentReq request,
+      ) async {
+    return PurchaseResultInfo.fromJson(
+      await _channel.invokeMethod('createProductOrderIntent', request.toMap()),
+    );
+  }
 
-  // /// Creates orders for products managed by the product management system (PMS), including consumables, non-consumables, and subscriptions.
-  // static Future<PurchaseResultInfo> createPurchaseIntent(
-  //   PurchaseIntentReq request,
-  // ) async {
-  //   return PurchaseResultInfo.fromJson(
-  //     await _channel.invokeMethod('createPurchaseIntent', request.toMap()),
-  //   );
-  // }
+  /// Consumes a consumable after it is successfully delivered.
+  static Future<ConsumeOwnedPurchaseResult> consumeProduct(
+      ConsumeOwnedPurchaseReq request,
+      ) async {
+    return ConsumeOwnedPurchaseResult.fromJson(
+      await _channel.invokeMethod('consumeProduct', request.toMap()),
+    );
+  }
 
-  // /// Queries order information of purchased products.
-  // static Future<OwnedPurchasesResult> obtainOwnedPurchases(
-  //   OwnedPurchasesReq request,
-  // ) async {
-  //   return OwnedPurchasesResult.fromJson(
-  //     await _channel.invokeMethod('obtainOwnedPurchases', request.toMap()),
-  //   );
-  // }
+  /// 取消订阅
+  static Future<bool> cancelSubscriptionProduct({
+    required String agreementNo,
+    required String iapOrderNo,
+  }) async {
+    bool result = await _channel.invokeMethod(
+      'cancelSubscriptionProduct',
+      <String, String>{'agreementNo': agreementNo, 'iapOrderNo': iapOrderNo},
+    );
+    return result;
+  }
 
-  // /// Consumes a consumable after it is successfully delivered.
-  // static Future<ConsumeOwnedPurchaseResult> consumeOwnedPurchase(
-  //   ConsumeOwnedPurchaseReq request,
-  // ) async {
-  //   return ConsumeOwnedPurchaseResult.fromJson(
-  //     await _channel.invokeMethod('consumeOwnedPurchase', request.toMap()),
-  //   );
-  // }
+  /// 关闭日志
+  static Future<void> disableLogger() async {
+    return await _channel.invokeMethod('disableLogger');
+  }
 
-  // /// Obtains the purchase information of all consumed products or the receipts of all subscriptions.
-  // static Future<OwnedPurchasesResult> obtainOwnedPurchaseRecord(
-  //   OwnedPurchasesReq request,
-  // ) async {
-  //   return OwnedPurchasesResult.fromJson(
-  //     await _channel.invokeMethod(
-  //       'obtainOwnedPurchaseRecord',
-  //       request.toMap(),
-  //     ),
-  //   );
-  // }
+  /// 打开日志
+  static Future<void> enableLogger() async {
+    return await _channel.invokeMethod('enableLogger');
+  }
 
-  // /// Disables HMS Plugin Method Analytics which is used for sending usage analytics of HUAWEI IAP SDK's methods to improve the service quality.
-  // static Future<void> disableLogger() async {
-  //   await _channel.invokeMethod('disableLogger');
-  // }
-
-  // /// Enables HMS Plugin Method Analytics which is used for sending usage analytics of HUAWEI IAP SDK's methods to improve the service quality.
-  // static Future<void> enableLogger() async {
-  //   await _channel.invokeMethod('enableLogger');
-  // }
-
-  // /// Enables pending purchase.
-  // static Future<String> enablePendingPurchase() async {
-  //   String? result = await _channel.invokeMethod('enablePendingPurchase');
-  //   return result!;
-  // }
 }
