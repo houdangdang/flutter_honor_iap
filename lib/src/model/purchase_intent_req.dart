@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Request information of the createPurchaseIntent API.
 class PurchaseIntentReq extends BaseReq {

@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Request information of the obtainProductInfo API.
 class ProductInfoReq extends BaseReq {
@@ -12,12 +12,12 @@ class ProductInfoReq extends BaseReq {
   /// ID list of products to be queried. Each product ID must exist and be unique in the current app.
   ///
   /// The product ID is the same as that you set when configuring product information in AppGallery Connect.
-  List<String> skuIds;
+  List<String> productIds;
 
   /// Creates a [ProductInfoReq] object.
   ProductInfoReq({
     required this.priceType,
-    required this.skuIds,
+    required this.productIds,
     String? reservedInfor,
   }) : super(reservedInfor: reservedInfor);
 
@@ -29,14 +29,14 @@ class ProductInfoReq extends BaseReq {
 
   factory ProductInfoReq.fromMap(Map<String, dynamic> json) => ProductInfoReq(
         priceType: json['priceType'],
-        skuIds: json['skuIds'].cast<String>(),
+        productIds: json['skuIds'].cast<String>(),
         reservedInfor: json['reservedInfor'],
       );
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'priceType': priceType,
-      'skuIds': skuIds,
+      'skuIds': productIds,
       'reservedInfor': reservedInfor,
     };
   }
@@ -44,18 +44,18 @@ class ProductInfoReq extends BaseReq {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    if (this.runtimeType != other.runtimeType) return false;
+    if (runtimeType != other.runtimeType) return false;
 
     return other is ProductInfoReq &&
-        this.priceType == other.priceType &&
-        listEquals(this.skuIds, other.skuIds) &&
-        this.reservedInfor == other.reservedInfor;
+        priceType == other.priceType &&
+        listEquals(productIds, other.productIds) &&
+        reservedInfor == other.reservedInfor;
   }
 
   @override
   int get hashCode => Object.hash(
         priceType,
-        Object.hashAll(skuIds),
+        Object.hashAll(productIds),
         reservedInfor,
       );
 }

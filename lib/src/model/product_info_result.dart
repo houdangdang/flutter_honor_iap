@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Information returned when the obtainProductInfo API is successfully called.
 class ProductInfoResult {

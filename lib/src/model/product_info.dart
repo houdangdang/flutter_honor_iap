@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Details of a product.
 class ProductInfo {

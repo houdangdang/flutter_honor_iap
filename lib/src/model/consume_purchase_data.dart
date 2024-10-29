@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Store user's purchase information about consumables, non-consumables, and subscriptions.
 class ConsumePurchaseData {

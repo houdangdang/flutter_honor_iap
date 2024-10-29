@@ -1,4 +1,4 @@
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Provides a tool that parses the InAppPurchaseData string.
 class InAppPurchaseData {

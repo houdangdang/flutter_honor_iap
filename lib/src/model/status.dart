@@ -1,6 +1,4 @@
-
-
-part of '../../flutter_honor_iap.dart';
+part of flutter_honor_iap;
 
 /// Task processing result.
 class Status {
