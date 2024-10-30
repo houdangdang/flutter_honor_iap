@@ -6,7 +6,7 @@ class PurchaseResultInfo {
   String? inAppDataSignature;
   String? errMsg;
   String? signatureAlgorithm;
-  String? consumeData;
+  ConsumePurchaseData? consumeData;
   String? agreementNo;
   String? iapOrderNo;
   String? purchaseToken;
@@ -34,7 +34,9 @@ class PurchaseResultInfo {
       inAppDataSignature: jsonMap['inAppDataSignature'],
       errMsg: jsonMap['errMsg'],
       signatureAlgorithm: jsonMap['signatureAlgorithm'],
-      consumeData: jsonMap['consumeData'],
+      consumeData: jsonMap['consumeData'] != null
+          ? ConsumePurchaseData.fromJson(jsonMap['consumeData'])
+          : null,
       agreementNo: jsonMap['agreementNo'],
       iapOrderNo: jsonMap['iapOrderNo'],
       purchaseToken: jsonMap['purchaseToken'],
@@ -47,7 +49,7 @@ class PurchaseResultInfo {
       'inAppDataSignature': inAppDataSignature,
       'errMsg': errMsg,
       'signatureAlgorithm': signatureAlgorithm,
-      'consumeData': consumeData,
+      'consumeData': consumeData?.toJson(),
       'agreementNo': agreementNo,
       'iapOrderNo': iapOrderNo,
       'purchaseToken': purchaseToken,

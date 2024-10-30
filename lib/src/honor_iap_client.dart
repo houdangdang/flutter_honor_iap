@@ -58,10 +58,10 @@ class FlutterIapClient {
   }
 
   /// Consumes a consumable after it is successfully delivered.
-  static Future<ConsumeOwnedPurchaseResult> consumeProduct(
+  static Future<PurchaseResultInfo> consumeProduct(
     ConsumeOwnedPurchaseReq request,
   ) async {
-    return ConsumeOwnedPurchaseResult.fromJson(
+    return PurchaseResultInfo.fromJson(
       await _channel.invokeMethod('consumeProduct', request.toMap()),
     );
   }
