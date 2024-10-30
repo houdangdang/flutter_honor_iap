@@ -143,6 +143,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                                         } else {
                                             Map<String, String> purchaseData = new HashMap<>();
                                             purchaseData.put("purchaseToken", purchaseProductInfo.getPurchaseToken());
+                                            purchaseData.put("returnCode", "0");
                                             mPurchaseResult.success(mGson.toJson(purchaseData));
                                         }
                                     } else {
@@ -156,6 +157,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                                     purchaseData.put("agreementNo", agreementNo);
                                     purchaseData.put("iapOrderNo", iapOrderNo);
                                     purchaseData.put("purchaseToken", purchaseToken);
+                                    purchaseData.put("returnCode", "0");
                                     mPurchaseResult.success(mGson.toJson(purchaseData));
                                 }
                                 break;
@@ -315,6 +317,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             String consumeData = comsumeResp.getConsumeData();
             Map<String, String> purchaseData = new HashMap<>();
             purchaseData.put("consumeData", consumeData);
+            purchaseData.put("returnCode", "0");
             result.success(mGson.toJson(purchaseData));
         }).addOnFailureListener(e -> {
             // 消耗失败
