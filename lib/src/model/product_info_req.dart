@@ -28,15 +28,15 @@ class ProductInfoReq extends BaseReq {
   String toJson() => json.encode(toMap());
 
   factory ProductInfoReq.fromMap(Map<String, dynamic> json) => ProductInfoReq(
-        priceType: json['priceType'],
-        productIds: json['skuIds'].cast<String>(),
-        reservedInfor: json['reservedInfor'],
-      );
+    priceType: json['priceType'],
+    productIds: json['productIds'].cast<String>(),
+    reservedInfor: json['reservedInfor'],
+  );
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'priceType': priceType,
-      'skuIds': productIds,
+      'productIds': productIds,
       'reservedInfor': reservedInfor,
     };
   }
@@ -54,8 +54,8 @@ class ProductInfoReq extends BaseReq {
 
   @override
   int get hashCode => Object.hash(
-        priceType,
-        Object.hashAll(productIds),
-        reservedInfor,
-      );
+    priceType,
+    Object.hashAll(productIds),
+    reservedInfor,
+  );
 }

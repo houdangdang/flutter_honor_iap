@@ -21,7 +21,7 @@ class ConsumeOwnedPurchaseReq extends BaseReq {
   factory ConsumeOwnedPurchaseReq.fromMap(Map<String, dynamic> json) =>
       ConsumeOwnedPurchaseReq(
         purchaseToken: json['purchaseToken'],
-        developerChallenge: json['developerChallange'],
+        developerChallenge: json['developerChallenge'],
         signatureAlgorithm: json['signatureAlgorithm'],
         reservedInfor: json['reservedInfor'],
       );

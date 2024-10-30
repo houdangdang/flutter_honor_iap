@@ -41,12 +41,9 @@ class FlutterIapClient {
   }
 
   /// Get product details configured in Honor.
-  static Future<ProductInfoResult> getProductInfo(
-    ProductInfoReq request,
-  ) async {
-    return ProductInfoResult.fromJson(
-      await _channel.invokeMethod('getProductInfo', request.toMap()),
-    );
+  static Future<ProductInfoResult> getProductInfo(ProductInfoReq request) async {
+    final products = await _channel.invokeMethod('getProductInfo', request.toMap());
+    return ProductInfoResult.fromJson(products);
   }
 
   /// Creates orders for products managed by the product management system (PMS), including consumables, non-consumables, and subscriptions.

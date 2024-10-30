@@ -16,6 +16,9 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import com.hihonor.iap.framework.data.ApiException;
 import com.hihonor.iap.framework.utils.JsonUtil;
 import com.hihonor.iap.framework.utils.logger.LogUtils;
@@ -56,15 +59,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
     private static String mPublicKey;
 
+    private final Gson mGson;
+
     private IapClient mIapClient;
 
     private final Activity mActivity;
 
-    private final Map<Integer, Pair<Result, Integer>> mResultsForRequests;
+    private Result mPurchaseResult;
 
     public MethodCallHandlerImpl(Activity activity) {
         this.mActivity = activity;
-        mResultsForRequests = new HashMap<>();
+        mGson = new GsonBuilder().create();
     }
 
     @Override
@@ -98,9 +103,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 break;
             case "disableLogger":
                 LogUtils.setLogEnable(false);
+                result.notImplemented();
                 break;
             case "enableLogger":
                 LogUtils.setLogEnable(true);
+                result.notImplemented();
                 break;
             default:
                 result.notImplemented();
@@ -110,14 +117,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
     @Override
     public boolean onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        final Pair<Result, Integer> pair = mResultsForRequests.get(requestCode);
-        if (pair == null) {
-            return false;
-        }
-
-        final Result result = pair.first;
-        final int requestType = pair.second;
-
         if (requestCode == REQUEST_CODE_PAY) {
             // 客户端并不能100%确保支付结果回调
             // 当没收到回调时，可调用getOwnedPurchased、getOwnedPurchaseRecord查询购买记录
@@ -125,6 +124,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 PurchaseResultInfo purchaseResultInfo = IapUtil.parsePurchaseResultInfoFromIntent(data);
                 if (purchaseResultInfo == null) {
                     // 取消支付
+                    mPurchaseResult.error(String.valueOf(OrderStatusCode.ORDER_QUICK_PAYMENT_CANCEL), "取消支付", null);
                 } else {
                     String purchaseProductInfoStr = purchaseResultInfo.getPurchaseProductInfo();
                     try {
@@ -136,13 +136,26 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                                 if (0 == productType) {
                                     PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
                                     boolean verify = RSAUtil.verify(purchaseProductInfoStr, publicKey, purchaseResultInfo.getPurchaseProductInfoSig());
-                                    if (verify && mAutoConsume) {
-                                        // 对消耗型商品进行发货，发货成功之后，进行消耗。也就是通知荣耀服务器商品已发货。消耗之后才能重复购买。
-                                        autoConsumeProduct(purchaseProductInfo.getPurchaseToken(), result);
+                                    if (verify) {
+                                        if (mAutoConsume) {
+                                            // 对消耗型商品进行发货，发货成功之后，进行消耗。也就是通知荣耀服务器商品已发货。消耗之后才能重复购买。
+                                            autoConsumeProduct(purchaseProductInfo.getPurchaseToken(), mPurchaseResult);
+                                        } else {
+                                            Map<String, String> purchaseData = new HashMap<>();
+                                            purchaseData.put("purchaseToken", purchaseProductInfo.getPurchaseToken());
+                                            mPurchaseResult.success(mGson.toJson(purchaseData));
+                                        }
+                                    } else {
+                                        mPurchaseResult.error(String.valueOf(OrderStatusCode.ORDER_STATE_AUTH_FAILURE), "公钥验证失败", null);
                                     }
                                 } else if (2 == productType) {
                                     String agreementNo = purchaseProductInfo.getSubscription().getAgreementNo();
                                     String iapOrderNo = purchaseProductInfo.getSubscription().getSubIapOrderNo();
+                                    Map<String, String> purchaseData = new HashMap<>();
+                                    purchaseData.put("agreementNo", agreementNo);
+                                    purchaseData.put("iapOrderNo", iapOrderNo);
+                                    purchaseData.put("iapOrderNo", iapOrderNo);
+                                    mPurchaseResult.success(mGson.toJson(purchaseData));
                                 }
                                 break;
                             case PurchaseProductInfo.PurchaseState.UNPAID:
@@ -150,15 +163,18 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                             default:
                                 // 支付失败
                                 LogUtils.d(TAG, "---onActivityResult---支付失败---");
+                                mPurchaseResult.error(String.valueOf(OrderStatusCode.ORDER_STATE_FAIL), "支付失败", null);
                         }
                     } catch (Throwable t) {
                         // 支付失败
                         LogUtils.e(TAG, "---onActivityResult---支付失败---" + t.getMessage());
+                        mPurchaseResult.error(String.valueOf(OrderStatusCode.ORDER_STATE_FAIL), t.getMessage(), null);
                     }
                 }
             } else {
                 // 取消支付
                 LogUtils.d(TAG, "---onActivityResult---取消支付---");
+                mPurchaseResult.error(String.valueOf(OrderStatusCode.ORDER_QUICK_PAYMENT_CANCEL), "取消支付", null);
             }
         }
         return false;
@@ -207,7 +223,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         Task<ProductInfoResult> productInfo = mIapClient.getProductInfo(productInfoReq);
         productInfo.addOnSuccessListener(productInfoResult -> {
             LogUtils.d(TAG, "product data is：" + productInfoResult.getProductInfos().toString());
-            result.success(productInfoResult.getProductInfos().toString());
+            result.success(mGson.toJson(productInfoResult));
         }).addOnFailureListener(e -> {
             LogUtils.e(TAG, String.format("getProductInfo %d %s", e.errorCode, e.message));
             result.error(String.valueOf(e.errorCode), e.message, null);
@@ -219,7 +235,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         // Arguments from call
         final String productId = ValueGetter.getString("productId", call);
         final int priceType = ValueGetter.getInt("priceType", call);
-        final int sandoxTest = ValueGetter.getInt("sandoxTest", call);
+        final int sandboxTest = ValueGetter.getInt("sandboxTest", call);
         final String developerPayload = call.argument("developerPayload") == null
                 ? null
                 : ValueGetter.getString("developerPayload", call);
@@ -229,13 +245,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         productOrderIntentReq.setProductType(priceType);
         productOrderIntentReq.setProductId(productId);
         productOrderIntentReq.setDeveloperPayload(developerPayload);
-        productOrderIntentReq.setNeedSandboxTest(sandoxTest);//传1为沙盒测试
+        productOrderIntentReq.setNeedSandboxTest(sandboxTest);//传1为沙盒测试
 
         Task<ProductOrderIntentResult> productOrderIntent =
                 mIapClient.createProductOrderIntent(productOrderIntentReq);
         productOrderIntent.addOnSuccessListener(createProductOrderResp -> {
             Intent intent = createProductOrderResp.getIntent();
             if (intent != null && mActivity != null) {
+                mPurchaseResult = result;
                 mActivity.startActivityForResult(intent, REQUEST_CODE_PAY);
             }
         }).addOnFailureListener(e -> {
@@ -273,12 +290,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
     /// 查询已购买未消耗的列表(消耗型商品补单需要)、用户已订购商品的购买数据
     private void getOwnedPurchased(@NonNull final MethodCall call, @NonNull final Result result) {
-
+        result.notImplemented();
     }
 
     /// 查看用户历史购买记录
     private void getOwnedPurchaseRecord(@NonNull final MethodCall call, @NonNull final Result result) {
-
+        result.notImplemented();
     }
 
     /**

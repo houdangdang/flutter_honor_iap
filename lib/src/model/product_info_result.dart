@@ -6,7 +6,7 @@ class ProductInfoResult {
   String? errMsg;
 
   /// List of found products.
-  List<ProductInfo>? productInfoList;
+  List<ProductInfo>? productInfos;
 
   /// Result code.
   ///
@@ -19,38 +19,35 @@ class ProductInfoResult {
   /// Creates a [ProductInfoResult] object.
   ProductInfoResult({
     this.errMsg,
-    this.productInfoList,
+    this.productInfos,
     this.returnCode,
     this.status,
   });
 
   /// Creates a [ProductInfoResult] object from a JSON string.
-  factory ProductInfoResult.fromJson(String str) =>
-      ProductInfoResult.fromMap(json.decode(str));
+  factory ProductInfoResult.fromJson(String str) => ProductInfoResult.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
-  factory ProductInfoResult.fromMap(Map<dynamic, dynamic> json) =>
-      ProductInfoResult(
-        errMsg: json['errMsg'],
-        productInfoList: json['productInfoList'] == null
-            ? null
-            : List<ProductInfo>.from(
-                json['productInfoList']
-                    .map((dynamic x) => ProductInfo.fromMap(x)),
-              ).toList(),
-        returnCode: json['returnCode']?.toString(),
-        status: json['status'] == null ? null : Status.fromMap(json['status']),
-      );
+  factory ProductInfoResult.fromMap(Map<dynamic, dynamic> json) => ProductInfoResult(
+    errMsg: json['errMsg'],
+    productInfos: json['productInfos'] == null
+        ? null
+        : List<ProductInfo>.from(
+      json['productInfos'].map((dynamic x) => ProductInfo.fromJson(x)),
+    ).toList(),
+    returnCode: json['returnCode']?.toString(),
+    status: json['status'] == null ? null : Status.fromMap(json['status']),
+  );
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       'errMsg': errMsg,
-      'productInfoList': productInfoList == null
+      'productInfos': productInfos == null
           ? null
           : List<dynamic>.from(
-              productInfoList!.map((ProductInfo x) => x.toMap()),
-            ),
+        productInfos!.map((ProductInfo x) => x.toJson()),
+      ),
       'returnCode': returnCode,
       'status': status?.toMap(),
     };
@@ -63,16 +60,16 @@ class ProductInfoResult {
 
     return other is ProductInfoResult &&
         errMsg == other.errMsg &&
-        listEquals(productInfoList, other.productInfoList) &&
+        listEquals(productInfos, other.productInfos) &&
         returnCode == other.returnCode &&
         status == other.status;
   }
 
   @override
   int get hashCode => Object.hash(
-        errMsg,
-        Object.hashAll(productInfoList ?? <Iterable<Object>>[]),
-        returnCode,
-        status,
-      );
+    errMsg,
+    Object.hashAll(productInfos ?? <Iterable<Object>>[]),
+    returnCode,
+    status,
+  );
 }

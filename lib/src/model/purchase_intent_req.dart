@@ -6,12 +6,16 @@ class PurchaseIntentReq extends BaseReq {
   String productId;
   String? developerPayload;
   String? signatureAlgorithm;
+  bool? autoConsume;
+  int? sandboxTest;
 
   PurchaseIntentReq({
     required this.priceType,
     required this.productId,
     this.developerPayload,
     this.signatureAlgorithm,
+    this.autoConsume,
+    this.sandboxTest,
     String? reservedInfor,
   }) : super(reservedInfor: reservedInfor);
 
@@ -27,6 +31,8 @@ class PurchaseIntentReq extends BaseReq {
         developerPayload: json['developerPayload'],
         reservedInfor: json['reservedInfor'],
         signatureAlgorithm: json['signatureAlgorithm'],
+        autoConsume: json['autoConsume'],
+        sandboxTest: json['sandboxTest'],
       );
 
   Map<String, dynamic> toMap() {
@@ -36,6 +42,8 @@ class PurchaseIntentReq extends BaseReq {
       'developerPayload': developerPayload,
       'reservedInfor': reservedInfor,
       'signatureAlgorithm': signatureAlgorithm,
+      'autoConsume': autoConsume,
+      'sandboxTest': sandboxTest,
     };
   }
 
@@ -49,7 +57,9 @@ class PurchaseIntentReq extends BaseReq {
         productId == other.productId &&
         developerPayload == other.developerPayload &&
         reservedInfor == other.reservedInfor &&
-        signatureAlgorithm == other.signatureAlgorithm;
+        signatureAlgorithm == other.signatureAlgorithm &&
+        autoConsume == other.autoConsume &&
+        sandboxTest == other.sandboxTest;
   }
 
   @override
@@ -59,5 +69,7 @@ class PurchaseIntentReq extends BaseReq {
         developerPayload,
         reservedInfor,
         signatureAlgorithm,
+        autoConsume,
+        sandboxTest,
       );
 }
