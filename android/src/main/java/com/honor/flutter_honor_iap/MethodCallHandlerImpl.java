@@ -151,10 +151,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                                 } else if (2 == productType) {
                                     String agreementNo = purchaseProductInfo.getSubscription().getAgreementNo();
                                     String iapOrderNo = purchaseProductInfo.getSubscription().getSubIapOrderNo();
+                                    String purchaseToken = purchaseProductInfo.getPurchaseToken();
                                     Map<String, String> purchaseData = new HashMap<>();
                                     purchaseData.put("agreementNo", agreementNo);
                                     purchaseData.put("iapOrderNo", iapOrderNo);
-                                    purchaseData.put("iapOrderNo", iapOrderNo);
+                                    purchaseData.put("purchaseToken", purchaseToken);
                                     mPurchaseResult.success(mGson.toJson(purchaseData));
                                 }
                                 break;
@@ -258,6 +259,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         }).addOnFailureListener(e -> {
             //e.errorCode 对应 OrderStatusCode的值
             LogUtils.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
+            result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
 
@@ -310,7 +312,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         Task<ConsumeResult> comsumeRespTask = mIapClient.consumeProduct(comsumeReq);
         comsumeRespTask.addOnSuccessListener(comsumeResp -> {
             // 消耗成功
-            result.success(comsumeResp.getConsumeData());
+            String consumeData = comsumeResp.getConsumeData();
+            Map<String, String> purchaseData = new HashMap<>();
+            purchaseData.put("consumeData", consumeData);
+            result.success(mGson.toJson(purchaseData));
         }).addOnFailureListener(e -> {
             // 消耗失败
             LogUtils.e(TAG, "消耗失败：" + e.getErrorCode() + ": " + e.getMessage());

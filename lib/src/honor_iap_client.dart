@@ -41,15 +41,17 @@ class FlutterIapClient {
   }
 
   /// Get product details configured in Honor.
-  static Future<ProductInfoResult> getProductInfo(ProductInfoReq request) async {
-    final products = await _channel.invokeMethod('getProductInfo', request.toMap());
+  static Future<ProductInfoResult> getProductInfo(
+      ProductInfoReq request) async {
+    final products =
+        await _channel.invokeMethod('getProductInfo', request.toMap());
     return ProductInfoResult.fromJson(products);
   }
 
   /// Creates orders for products managed by the product management system (PMS), including consumables, non-consumables, and subscriptions.
   static Future<PurchaseResultInfo> createProductOrderIntent(
-      PurchaseIntentReq request,
-      ) async {
+    PurchaseIntentReq request,
+  ) async {
     return PurchaseResultInfo.fromJson(
       await _channel.invokeMethod('createProductOrderIntent', request.toMap()),
     );
@@ -57,8 +59,8 @@ class FlutterIapClient {
 
   /// Consumes a consumable after it is successfully delivered.
   static Future<ConsumeOwnedPurchaseResult> consumeProduct(
-      ConsumeOwnedPurchaseReq request,
-      ) async {
+    ConsumeOwnedPurchaseReq request,
+  ) async {
     return ConsumeOwnedPurchaseResult.fromJson(
       await _channel.invokeMethod('consumeProduct', request.toMap()),
     );
@@ -85,5 +87,4 @@ class FlutterIapClient {
   static Future<void> enableLogger() async {
     return await _channel.invokeMethod('enableLogger');
   }
-
 }

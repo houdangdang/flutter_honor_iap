@@ -3,19 +3,23 @@ part of flutter_honor_iap;
 /// Payment result information.
 class PurchaseResultInfo {
   String? returnCode;
-  InAppPurchaseData? inAppPurchaseData;
   String? inAppDataSignature;
   String? errMsg;
   String? signatureAlgorithm;
-  final String rawValue;
+  String? consumeData;
+  String? agreementNo;
+  String? iapOrderNo;
+  String? purchaseToken;
 
   PurchaseResultInfo({
-    required this.rawValue,
     this.inAppDataSignature,
-    this.inAppPurchaseData,
     this.returnCode,
     this.errMsg,
     this.signatureAlgorithm,
+    this.consumeData,
+    this.agreementNo,
+    this.iapOrderNo,
+    this.purchaseToken,
   });
 
   factory PurchaseResultInfo.fromJson(String str) =>
@@ -27,23 +31,26 @@ class PurchaseResultInfo {
     final jsonMap = json.decode(source) as Map<String, dynamic>;
     return PurchaseResultInfo(
       returnCode: jsonMap['returnCode']?.toString(),
-      inAppPurchaseData: jsonMap['inAppPurchaseData'] != null
-          ? InAppPurchaseData.fromJson(jsonMap['inAppPurchaseData'])
-          : null,
       inAppDataSignature: jsonMap['inAppDataSignature'],
       errMsg: jsonMap['errMsg'],
       signatureAlgorithm: jsonMap['signatureAlgorithm'],
-      rawValue: source,
+      consumeData: jsonMap['consumeData'],
+      agreementNo: jsonMap['agreementNo'],
+      iapOrderNo: jsonMap['iapOrderNo'],
+      purchaseToken: jsonMap['purchaseToken'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'returnCode': returnCode,
-      'inAppPurchaseData': inAppPurchaseData?.toJson(),
       'inAppDataSignature': inAppDataSignature,
       'errMsg': errMsg,
       'signatureAlgorithm': signatureAlgorithm,
+      'consumeData': consumeData,
+      'agreementNo': agreementNo,
+      'iapOrderNo': iapOrderNo,
+      'purchaseToken': purchaseToken,
     };
   }
 
@@ -54,18 +61,24 @@ class PurchaseResultInfo {
 
     return other is PurchaseResultInfo &&
         returnCode == other.returnCode &&
-        inAppPurchaseData == other.inAppPurchaseData &&
         inAppDataSignature == other.inAppDataSignature &&
         errMsg == other.errMsg &&
-        signatureAlgorithm == other.signatureAlgorithm;
+        signatureAlgorithm == other.signatureAlgorithm &&
+        consumeData == other.consumeData &&
+        agreementNo == other.agreementNo &&
+        iapOrderNo == other.iapOrderNo &&
+        purchaseToken == other.purchaseToken;
   }
 
   @override
   int get hashCode => Object.hash(
         returnCode,
-        inAppPurchaseData,
         inAppDataSignature,
         errMsg,
         signatureAlgorithm,
+        consumeData,
+        agreementNo,
+        iapOrderNo,
+        purchaseToken,
       );
 }
