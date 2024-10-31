@@ -78,6 +78,36 @@ class FlutterIapClient {
     return result;
   }
 
+  /// 查询已购买未消耗的列表(消耗型商品补单需要)、用户已订购商品的购买数据
+  static Future<OwnedPurchasesResult> getOwnedPurchased({
+    required int productType,
+    String? continueToken,
+  }) async {
+    final result = await _channel.invokeMethod(
+      'getOwnedPurchased',
+      <String, dynamic>{
+        'productType': productType,
+        'continueToken': continueToken
+      },
+    );
+    return OwnedPurchasesResult.fromJson(result);
+  }
+
+  /// 查看用户历史购买记录
+  static Future<OwnedPurchasesResult> getOwnedPurchaseRecord({
+    required int productType,
+    String? continueToken,
+  }) async {
+    final result = await _channel.invokeMethod(
+      'getOwnedPurchaseRecord',
+      <String, dynamic>{
+        'productType': productType,
+        'continueToken': continueToken
+      },
+    );
+    return OwnedPurchasesResult.fromJson(result);
+  }
+
   /// 关闭日志
   static Future<void> disableLogger() async {
     return await _channel.invokeMethod('disableLogger');

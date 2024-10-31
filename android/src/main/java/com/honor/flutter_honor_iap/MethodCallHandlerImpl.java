@@ -270,9 +270,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         final String agreementNo = ValueGetter.getString("agreementNo", call);
         final String iapOrderNo = ValueGetter.getString("iapOrderNo", call);
 
-        if (TextUtils.isEmpty(agreementNo) && TextUtils.isEmpty(iapOrderNo)){
-            LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号，请配置后重新尝试");
-            result.error("99890", "您暂时没有订阅型商品的订单号和合约号，请配置后重新尝试", null);
+        if (TextUtils.isEmpty(agreementNo) && TextUtils.isEmpty(iapOrderNo)) {
+            LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号");
+            result.error("99890", "您暂时没有订阅型商品的订单号和合约号", null);
             return;
         }
         CancelSubscriptionResultReq cancelSubscriptionResultReq = new
@@ -282,8 +282,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         cancelSubscriptionResultReq.setIapOrderNo(iapOrderNo);//支付成功时生成的订单号
         Task<Object> cancelResultTask =
                 mIapClient.cancelSubscriptionProduct(cancelSubscriptionResultReq);
-        cancelResultTask.addOnSuccessListener(o -> { result.success(true); });
-        cancelResultTask.addOnFailureListener(e -> { result.error(String.valueOf(e.getErrorCode()), e.getMessage(), null); });
+        cancelResultTask.addOnSuccessListener(o -> {
+            result.success(true);
+        });
+        cancelResultTask.addOnFailureListener(e -> {
+            result.error(String.valueOf(e.getErrorCode()), e.getMessage(), null);
+        });
     }
 
     /// 已购买商品进行消耗
@@ -294,18 +298,103 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
     /// 查询已购买未消耗的列表(消耗型商品补单需要)、用户已订购商品的购买数据
     private void getOwnedPurchased(@NonNull final MethodCall call, @NonNull final Result result) {
-        result.notImplemented();
+        final int productType = ValueGetter.getInt("productType", call);
+        final String[] continueToken = {ValueGetter.getString("continueToken", call)};
+
+        OwnedPurchasesReq ownedPurchasesReq = new OwnedPurchasesReq();
+        // 传入上一次查询得到的continueToken，获取新的数据，第一次传空
+        ownedPurchasesReq.setProductType(productType);
+        ownedPurchasesReq.setContinuationToken(continueToken[0]);
+        mIapClient.obtainOwnedPurchases(ownedPurchasesReq).addOnSuccessListener(new OnSuccessListener<OwnedPurchasesResult>() {
+            @Override
+            public void onSuccess(OwnedPurchasesResult ownedPurchasesResult) {
+                // ContinueToken用于获取下一个列表的数据，第一次为空，如果有更多数据ContinueToken有值，为空则没有更多数据
+                continueToken[0] = ownedPurchasesResult.getContinueToken();
+                // purchaseList 和 sigList 一一对应
+                List<String> sigList = ownedPurchasesResult.getSigList();
+                List<String> purchaseList = ownedPurchasesResult.getPurchaseList();
+                // 签名算法
+                String sigAlgorithm = ownedPurchasesResult.getSigAlgorithm();
+                // 公钥验签,放在客户端进行签名校验时，7.0.3.000版本之后的SDK，加密算法由"RSA"变更为"RSA_V2"
+                if ("RSA_V2".equals(sigAlgorithm)) {
+                    try {
+                        PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
+                        LogUtils.d(TAG, " publicKey :" + publicKey);
+                        for (int i = 0; i < purchaseList.size(); i++) {
+                            String PurchaseProductInfoStr = purchaseList.get(i);
+                            boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
+                            Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
+                        }
+                    } catch (Exception e) {
+                        LogUtils.e(TAG, "查询已购买未消耗的列表失败：" + e.getMessage());
+                    }
+                }
+                Log.d(TAG, ownedPurchasesResult.toString());
+                result.success(mGson.toJson(ownedPurchasesResult));
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(ApiException e) {
+                // e.errorCode 对应 OrderStatusCode的值
+                Log.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
+                result.error(String.valueOf(e.errorCode), e.message, null);
+            }
+        });
     }
 
     /// 查看用户历史购买记录
     private void getOwnedPurchaseRecord(@NonNull final MethodCall call, @NonNull final Result result) {
-        result.notImplemented();
+        final int productType = ValueGetter.getInt("productType", call);
+        final String[] continueToken = {ValueGetter.getString("continueToken", call)};
+
+        OwnedPurchasesReq ownedPurchasesReq = new OwnedPurchasesReq();
+        // 传入上一次查询得到的continueToken，获取新的数据，第一次传空
+        ownedPurchasesReq.setContinuationToken(continueToken[0]);
+        ownedPurchasesReq.setProductType(productType);
+        mIapClient.obtainOwnedPurchaseRecord(ownedPurchasesReq).addOnSuccessListener(new OnSuccessListener<OwnedPurchasesResult>() {
+            @Override
+            public void onSuccess(OwnedPurchasesResult ownedPurchasesResult) {
+                //获取到结果后需要进行签名校验
+                //ContinueToken用于获取下一个列表的数据，第一次为空，如果有更多数据ContinueToken有值，为空则没有更多数据
+                continueToken[0] = ownedPurchasesResult.getContinueToken();
+                Log.d(TAG, ownedPurchasesResult.toString());
+                // purchaseList 和 sigList 一一对应
+                List<String> sigList = ownedPurchasesResult.getSigList();
+                List<String> purchaseList = ownedPurchasesResult.getPurchaseList();
+                //签名算法
+                String sigAlgorithm = ownedPurchasesResult.getSigAlgorithm();
+                //公钥验签,放在客户端进行签名校验时，7.0.3.000版本之后的SDK，加密算法由"RSA"变更为"RSA_V2"
+                if ("RSA_V2".equals(sigAlgorithm)) {
+                    try {
+                        PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
+                        LogUtils.d(TAG, " publicKey :" + publicKey);
+                        for (int i = 0; i < purchaseList.size(); i++) {
+                            String PurchaseProductInfoStr = purchaseList.get(i);
+                            boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
+                            //verify 为true数据可信，false数据被篡改了，数据不可信
+                            Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
+                        }
+                    } catch (Exception e) {
+                        LogUtils.e(TAG, "查看用户历史购买记录失败：" + e.getMessage());
+                    }
+                }
+                result.success(mGson.toJson(ownedPurchasesResult));
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(ApiException e) {
+                //e.errorCode 对应 OrderStatusCode的值
+                Log.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
+                result.error(String.valueOf(e.errorCode), e.message, null);
+            }
+        });
     }
 
     /**
      * 商品消耗
      *
      * @param purchaseToken
+     * @param result
      */
     private void autoConsumeProduct(String purchaseToken, @NonNull final Result result) {
         ConsumeReq comsumeReq = new ConsumeReq();

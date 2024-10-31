@@ -16,3 +16,4 @@ part 'src/model/purchase_result_info.dart';
 part 'src/model/purchase_intent_req.dart';
 part 'src/model/consume_purchase_data.dart';
 part 'src/model/consume_owned_purchase_req.dart';
+part 'src/model/owned_purchases_result.dart';
