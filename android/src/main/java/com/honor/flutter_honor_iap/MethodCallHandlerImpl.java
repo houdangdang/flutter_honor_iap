@@ -21,7 +21,6 @@ import com.google.gson.GsonBuilder;
 
 import com.hihonor.iap.framework.data.ApiException;
 import com.hihonor.iap.framework.utils.JsonUtil;
-import com.hihonor.iap.framework.utils.logger.LogUtils;
 import com.hihonor.iap.sdk.Iap;
 import com.hihonor.iap.sdk.IapClient;
 import com.hihonor.iap.sdk.bean.CancelSubscriptionResultReq;
@@ -198,7 +197,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
     /// 检查当前环境是否可用
     private void checkEnvReady(@NonNull final MethodCall call, @NonNull final Result result) {
         if (mIapClient == null) {
-            LogUtils.e(TAG, "iap is not installed");
+           LogUtils.e(TAG, "iap is not installed");
             result.success(false);
             return;
         }
@@ -208,7 +207,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             result.success(true);
         }).addOnFailureListener(e -> {
             //不可用
-            LogUtils.e(TAG, "iap is unavailable code=" + e.errorCode + " message=" + e.message);
+           LogUtils.e(TAG, "iap is unavailable code=" + e.errorCode + " message=" + e.message);
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -225,10 +224,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
         Task<ProductInfoResult> productInfo = mIapClient.getProductInfo(productInfoReq);
         productInfo.addOnSuccessListener(productInfoResult -> {
-            LogUtils.d(TAG, "product data is：" + productInfoResult.getProductInfos().toString());
+           LogUtils.d(TAG, "product data is：" + productInfoResult.getProductInfos().toString());
             result.success(mGson.toJson(productInfoResult));
         }).addOnFailureListener(e -> {
-            LogUtils.e(TAG, String.format("getProductInfo %d %s", e.errorCode, e.message));
+           LogUtils.e(TAG, String.format("getProductInfo %d %s", e.errorCode, e.message));
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -260,7 +259,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             }
         }).addOnFailureListener(e -> {
             //e.errorCode 对应 OrderStatusCode的值
-            LogUtils.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
+           LogUtils.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -271,7 +270,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         final String iapOrderNo = ValueGetter.getString("iapOrderNo", call);
 
         if (TextUtils.isEmpty(agreementNo) && TextUtils.isEmpty(iapOrderNo)) {
-            LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号");
+           LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号");
             result.error("99890", "您暂时没有订阅型商品的订单号和合约号", null);
             return;
         }
@@ -319,14 +318,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 if ("RSA_V2".equals(sigAlgorithm)) {
                     try {
                         PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
-                        LogUtils.d(TAG, " publicKey :" + publicKey);
+                       LogUtils.d(TAG, " publicKey :" + publicKey);
                         for (int i = 0; i < purchaseList.size(); i++) {
                             String PurchaseProductInfoStr = purchaseList.get(i);
                             boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
                             Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
                         }
                     } catch (Exception e) {
-                        LogUtils.e(TAG, "查询已购买未消耗的列表失败：" + e.getMessage());
+                       LogUtils.e(TAG, "查询已购买未消耗的列表失败：" + e.getMessage());
                     }
                 }
                 Log.d(TAG, ownedPurchasesResult.toString());
@@ -367,7 +366,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 if ("RSA_V2".equals(sigAlgorithm)) {
                     try {
                         PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
-                        LogUtils.d(TAG, " publicKey :" + publicKey);
+                       LogUtils.d(TAG, " publicKey :" + publicKey);
                         for (int i = 0; i < purchaseList.size(); i++) {
                             String PurchaseProductInfoStr = purchaseList.get(i);
                             boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
@@ -375,7 +374,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                             Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
                         }
                     } catch (Exception e) {
-                        LogUtils.e(TAG, "查看用户历史购买记录失败：" + e.getMessage());
+                       LogUtils.e(TAG, "查看用户历史购买记录失败：" + e.getMessage());
                     }
                 }
                 result.success(mGson.toJson(ownedPurchasesResult));
@@ -410,7 +409,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             result.success(mGson.toJson(purchaseData));
         }).addOnFailureListener(e -> {
             // 消耗失败
-            LogUtils.e(TAG, "消耗失败：" + e.getErrorCode() + ": " + e.getMessage());
+           LogUtils.e(TAG, "消耗失败：" + e.getErrorCode() + ": " + e.getMessage());
             result.error(String.valueOf(e.getErrorCode()), e.getMessage(), null);
         });
     }

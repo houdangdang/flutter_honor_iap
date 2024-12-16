@@ -85,8 +85,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     // 接入联运应用SDK
-    implementation(name: 'amjoin-sdk-v2.0.5.301-ProdRelease-release', ext: 'aar')
+     implementation(name: 'amjoin-sdk-v2.0.6.301-ProdRelease', ext: 'aar')
 
     // 引入支付SDK
-    implementation 'com.hihonor.mcs:iap-sdk:8.0.5.300'
+     implementation 'com.hihonor.mcs:iap-sdk:8.1.6.300'
 }
