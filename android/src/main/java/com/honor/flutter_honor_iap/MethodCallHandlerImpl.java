@@ -1,13 +1,9 @@
 package com.honor.flutter_honor_iap;
 
 import android.app.Activity;
-import android.os.Bundle;
-import android.content.Context;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.Pair;
-import android.widget.Toast;
 
 import java.security.PublicKey;
 import java.util.List;
@@ -32,8 +28,6 @@ import com.hihonor.iap.sdk.bean.ProductInfoReq;
 import com.hihonor.iap.sdk.bean.ProductInfoResult;
 import com.hihonor.iap.sdk.bean.ProductOrderIntentReq;
 import com.hihonor.iap.sdk.bean.ProductOrderIntentResult;
-import com.hihonor.iap.sdk.bean.ProductOrderIntentWithPriceReq;
-import com.hihonor.iap.sdk.bean.ProductType;
 import com.hihonor.iap.sdk.bean.PurchaseProductInfo;
 import com.hihonor.iap.sdk.bean.PurchaseResultInfo;
 import com.hihonor.iap.sdk.bean.OrderStatusCode;
@@ -41,8 +35,10 @@ import com.hihonor.iap.sdk.tasks.OnFailureListener;
 import com.hihonor.iap.sdk.tasks.OnSuccessListener;
 import com.hihonor.iap.sdk.tasks.Task;
 import com.hihonor.iap.sdk.utils.IapUtil;
+import com.hihonor.appmarketjointsdk.bean.init.AppParams;
+import com.hihonor.appmarketjointsdk.callback.APICallback;
+import com.hihonor.appmarketjointsdk.sdk.AMJointSdk;
 
-import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.MethodCall;
@@ -74,6 +70,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
     @Override
     public void onMethodCall(@NonNull final MethodCall call, @NonNull final Result result) {
         switch (call.method) {
+            case "init":
+                init(call, result);
+                break;
             case "getIapClient":
                 getIapClient(call, result);
                 break;
@@ -182,7 +181,28 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         return false;
     }
 
-    /// 初始化IAP SDK
+    /// 联运SDK初始化
+    private void init(@NonNull final MethodCall call, @NonNull final Result result) {
+        if (mActivity != null) {
+            final String appId = ValueGetter.getString("appId", call);
+            AppParams appParams = new AppParams.Builder().appId(appId).setUserPrivacyState(true).build();
+            AMJointSdk.init(appParams, new APICallback() {
+                @Override
+                public void onSuccess(String message) {
+                    LogUtils.d(TAG, " message=" + message);
+                    result.success(true);
+                }
+
+                @Override
+                public void onFailure(int errorCode, String message) {
+                    LogUtils.e(TAG, String.valueOf(errorCode) + " message=" + message);
+                    result.success(false);
+                }
+            });
+        }
+    }
+
+    /// 支付SDK初始化IAP SDK
     private IapClient getIapClient(@NonNull final MethodCall call, @NonNull final Result result) {
         if (mIapClient == null) {
             final String appId = ValueGetter.getString("appId", call);
@@ -197,7 +217,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
     /// 检查当前环境是否可用
     private void checkEnvReady(@NonNull final MethodCall call, @NonNull final Result result) {
         if (mIapClient == null) {
-           LogUtils.e(TAG, "iap is not installed");
+            LogUtils.e(TAG, "iap is not installed");
             result.success(false);
             return;
         }
@@ -207,7 +227,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             result.success(true);
         }).addOnFailureListener(e -> {
             //不可用
-           LogUtils.e(TAG, "iap is unavailable code=" + e.errorCode + " message=" + e.message);
+            LogUtils.e(TAG, "iap is unavailable code=" + e.errorCode + " message=" + e.message);
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -224,10 +244,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
 
         Task<ProductInfoResult> productInfo = mIapClient.getProductInfo(productInfoReq);
         productInfo.addOnSuccessListener(productInfoResult -> {
-           LogUtils.d(TAG, "product data is：" + productInfoResult.getProductInfos().toString());
+            LogUtils.d(TAG, "product data is：" + productInfoResult.getProductInfos().toString());
             result.success(mGson.toJson(productInfoResult));
         }).addOnFailureListener(e -> {
-           LogUtils.e(TAG, String.format("getProductInfo %d %s", e.errorCode, e.message));
+            LogUtils.e(TAG, String.format("getProductInfo %d %s", e.errorCode, e.message));
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -238,9 +258,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         final String productId = ValueGetter.getString("productId", call);
         final int priceType = ValueGetter.getInt("priceType", call);
         final int sandboxTest = ValueGetter.getInt("sandboxTest", call);
-        final String developerPayload = call.argument("developerPayload") == null
-                ? null
-                : ValueGetter.getString("developerPayload", call);
+        final String developerPayload = call.argument("developerPayload") == null ? null : ValueGetter.getString("developerPayload", call);
         mAutoConsume = ValueGetter.getBoolean("autoConsume", call);
 
         ProductOrderIntentReq productOrderIntentReq = new ProductOrderIntentReq();
@@ -249,8 +267,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         productOrderIntentReq.setDeveloperPayload(developerPayload);
         productOrderIntentReq.setNeedSandboxTest(sandboxTest);//传1为沙盒测试
 
-        Task<ProductOrderIntentResult> productOrderIntent =
-                mIapClient.createProductOrderIntent(productOrderIntentReq);
+        Task<ProductOrderIntentResult> productOrderIntent = mIapClient.createProductOrderIntent(productOrderIntentReq);
         productOrderIntent.addOnSuccessListener(createProductOrderResp -> {
             Intent intent = createProductOrderResp.getIntent();
             if (intent != null && mActivity != null) {
@@ -259,7 +276,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             }
         }).addOnFailureListener(e -> {
             //e.errorCode 对应 OrderStatusCode的值
-           LogUtils.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
+            LogUtils.i(TAG, String.format("createProductOrderIntent %d %s", e.errorCode, e.message));
             result.error(String.valueOf(e.errorCode), e.message, null);
         });
     }
@@ -270,17 +287,15 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
         final String iapOrderNo = ValueGetter.getString("iapOrderNo", call);
 
         if (TextUtils.isEmpty(agreementNo) && TextUtils.isEmpty(iapOrderNo)) {
-           LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号");
+            LogUtils.e(TAG, "您暂时没有订阅型商品的订单号和合约号");
             result.error("99890", "您暂时没有订阅型商品的订单号和合约号", null);
             return;
         }
-        CancelSubscriptionResultReq cancelSubscriptionResultReq = new
-                CancelSubscriptionResultReq();
+        CancelSubscriptionResultReq cancelSubscriptionResultReq = new CancelSubscriptionResultReq();
         cancelSubscriptionResultReq.setCancelType(2);//固定值，值为2。代表通过SDK提供的cancelSubscriptionProduct调用。
         cancelSubscriptionResultReq.setAgreementNo(agreementNo);//合约号，从获取的已购订阅商品信息中获取
         cancelSubscriptionResultReq.setIapOrderNo(iapOrderNo);//支付成功时生成的订单号
-        Task<Object> cancelResultTask =
-                mIapClient.cancelSubscriptionProduct(cancelSubscriptionResultReq);
+        Task<Object> cancelResultTask = mIapClient.cancelSubscriptionProduct(cancelSubscriptionResultReq);
         cancelResultTask.addOnSuccessListener(o -> {
             result.success(true);
         });
@@ -318,14 +333,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 if ("RSA_V2".equals(sigAlgorithm)) {
                     try {
                         PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
-                       LogUtils.d(TAG, " publicKey :" + publicKey);
+                        LogUtils.d(TAG, " publicKey :" + publicKey);
                         for (int i = 0; i < purchaseList.size(); i++) {
                             String PurchaseProductInfoStr = purchaseList.get(i);
                             boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
                             Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
                         }
                     } catch (Exception e) {
-                       LogUtils.e(TAG, "查询已购买未消耗的列表失败：" + e.getMessage());
+                        LogUtils.e(TAG, "查询已购买未消耗的列表失败：" + e.getMessage());
                     }
                 }
                 Log.d(TAG, ownedPurchasesResult.toString());
@@ -366,7 +381,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                 if ("RSA_V2".equals(sigAlgorithm)) {
                     try {
                         PublicKey publicKey = RSAUtil.getPublicKey(mPublicKey);
-                       LogUtils.d(TAG, " publicKey :" + publicKey);
+                        LogUtils.d(TAG, " publicKey :" + publicKey);
                         for (int i = 0; i < purchaseList.size(); i++) {
                             String PurchaseProductInfoStr = purchaseList.get(i);
                             boolean verify = RSAUtil.verify(PurchaseProductInfoStr, publicKey, sigList.get(i));
@@ -374,7 +389,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
                             Log.d(TAG, " PurchaseProductInfoStr verify " + verify + "  , " + PurchaseProductInfoStr);
                         }
                     } catch (Exception e) {
-                       LogUtils.e(TAG, "查看用户历史购买记录失败：" + e.getMessage());
+                        LogUtils.e(TAG, "查看用户历史购买记录失败：" + e.getMessage());
                     }
                 }
                 result.success(mGson.toJson(ownedPurchasesResult));
@@ -409,7 +424,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler, ActivityResultL
             result.success(mGson.toJson(purchaseData));
         }).addOnFailureListener(e -> {
             // 消耗失败
-           LogUtils.e(TAG, "消耗失败：" + e.getErrorCode() + ": " + e.getMessage());
+            LogUtils.e(TAG, "消耗失败：" + e.getErrorCode() + ": " + e.getMessage());
             result.error(String.valueOf(e.getErrorCode()), e.getMessage(), null);
         });
     }

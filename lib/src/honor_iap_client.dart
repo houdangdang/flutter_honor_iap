@@ -21,6 +21,15 @@ class FlutterIapClient {
   /// Original value: `2`.
   static const int SUBSCRIPTION = 2;
 
+  /// 初始化联运SDK
+  static Future<bool> init({required String appId}) async {
+    bool result = await _channel.invokeMethod(
+      'init',
+      <String, String>{'appId': appId},
+    );
+    return result;
+  }
+
   /// 初始化IAP SDK
   static Future<bool> getIapClient({
     required String appId,

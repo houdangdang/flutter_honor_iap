@@ -1,10 +1,26 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 
-import 'package:flutter_honor_iap_example/honor_iap_util.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_honor_iap/flutter_honor_iap.dart';
 
 void main() {
+  realRunApp();
+}
+
+void realRunApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (FlutterErrorDetails details) {
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(details);
+    } else {
+      Zone.current.handleUncaughtError(details.exception, details.stack!);
+    }
+  };
+  final result = await FlutterHonorIap.init(appId: '104437927');
+  print('联运sdk初始化结果 === $result');
+  FlutterIapClient.enableLogger();
   runApp(const MyApp());
 }
 
@@ -24,10 +40,14 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
   void _initHonorIap() async {
     if (!_isInstalled) {
-      _isInstalled = await HonorIapUtil.initHonorIap();
+      _isInstalled = await FlutterHonorIap.getIapClient(
+        appId: '104437927',
+        cpId: '109999833520',
+        publicKey:
+            'MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAlsr11sySS1ovR+uyxEkIBjfv2CcVCd7NTJcZjCLbCsw42QUelPzqeS4+v7OLYFB1wRcz87Ga3tUche+KVAcLbDhsi3XATfYNRlvf/Q+aOy6IFtM0EdCF99yYAS/5Fndi45HwBhNO0sB6uDnpHyliO8fDCY+j4XEcHkxeByF07A91FQBWGUMf9qMCgwfayDqY49WkbPGKTL10YPKwckjvdLq+l3iaXiPKfa0OBAPBxK4QKw/HIsKp0B9/k2WP1G4r4fETmxT6ybeetIawLQ6GpS/ITu4S6LnceEnQ7k2j3buf7J900jPqxQ1JT+RDTZKI20cDnVFZ9zxhOmbUOKXozp2YqVLDuN4oIhwILgNCxwdcSDaA1wppM1IREIDjyi0r7+NKsWwnWRSciUbqh98c1k00xSTmoh0ie84N3Wxi5F9PVnfWZFhKKA2SszVv/cQx97p+rNki6lssUiQXFq3ZB3elPrdeymcN8yDZD5Jta55ifANwsuCedeVh5k3a0+oTAgMBAAE=',
+      );
       _logMsg = _isInstalled ? '初始化成功' : '初始化失败';
       setState(() {});
     }
@@ -39,7 +59,7 @@ class _MyAppState extends State<MyApp> {
         setState(() => _logMsg = '未初始化，请先初始化');
         return;
       }
-      final result = await HonorIapUtil.getProductInfo(
+      final result = await FlutterHonorIap.getProductInfo(
         priceType: priceType,
         productIds: [productId],
       );
@@ -61,7 +81,7 @@ class _MyAppState extends State<MyApp> {
         setState(() => _logMsg = '未初始化，请先初始化');
         return;
       }
-      final result = await HonorIapUtil.createProductOrderIntent(
+      final result = await FlutterHonorIap.createProductOrderIntent(
         priceType: priceType,
         productId: productId,
         developerPayload: developerPayload,
@@ -73,14 +93,15 @@ class _MyAppState extends State<MyApp> {
       setState(() => _logMsg = e?.message ?? '支付失败');
     }
   }
-  
+
   void _getOwnedPurchased(int productType) async {
     try {
       if (!_isInstalled) {
         setState(() => _logMsg = '未初始化，请先初始化');
         return;
       }
-      final result = await HonorIapUtil.getOwnedPurchased(productType: productType);
+      final result =
+          await FlutterHonorIap.getOwnedPurchased(productType: productType);
       setState(() => _logMsg = result.toJson());
     } on PlatformException catch (e) {
       setState(() => _logMsg = e?.message ?? '支付失败');
@@ -93,7 +114,8 @@ class _MyAppState extends State<MyApp> {
         setState(() => _logMsg = '未初始化，请先初始化');
         return;
       }
-      final result = await HonorIapUtil.getOwnedPurchaseRecord(productType: productType);
+      final result =
+          await FlutterHonorIap.getOwnedPurchaseRecord(productType: productType);
       setState(() => _logMsg = result.toJson());
     } on PlatformException catch (e) {
       setState(() => _logMsg = e?.message ?? '支付失败');
@@ -177,7 +199,8 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => _createProductOrderIntent(priceType: 0, productId: 'test1'),
+                  onPressed: () => _createProductOrderIntent(
+                      priceType: 0, productId: 'test1'),
                   child: Text(
                     '支付【消耗型】商品信息【test1】自动消耗',
                     style: _isInstalled ? normalTextStyle : disableTextStyle,
@@ -186,7 +209,8 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => _createProductOrderIntent(priceType: 0, productId: 'test1', autoConsume: false),
+                  onPressed: () => _createProductOrderIntent(
+                      priceType: 0, productId: 'test1', autoConsume: false),
                   child: Text(
                     '支付【消耗型】商品信息【test1】',
                     style: _isInstalled ? normalTextStyle : disableTextStyle,
@@ -195,7 +219,8 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => _createProductOrderIntent(priceType: 2, productId: 'autotest1'),
+                  onPressed: () => _createProductOrderIntent(
+                      priceType: 2, productId: 'autotest1'),
                   child: Text(
                     '支付【自动续费订阅】商品信息【autotest1】',
                     style: _isInstalled ? normalTextStyle : disableTextStyle,
@@ -204,7 +229,8 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => _createProductOrderIntent(priceType: 2, productId: 'autotest2'),
+                  onPressed: () => _createProductOrderIntent(
+                      priceType: 2, productId: 'autotest2'),
                   child: Text(
                     '支付【自动续费订阅】商品信息【autotest2】含促销价',
                     style: _isInstalled ? normalTextStyle : disableTextStyle,
